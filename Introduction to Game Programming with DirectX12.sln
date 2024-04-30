@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Direct3D Initilisation", "Direct3D Initilisation\Direct3D Initilisation.vcxproj", "{FFE1C233-1E48-41DF-A0F6-8477020D36AD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxitems", "{7E0E5A7F-AEBE-4DD3-B8E8-1CDA984F1032}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FFE1C233-1E48-41DF-A0F6-8477020D36AD}.Debug|x64.ActiveCfg = Debug|x64
+		{FFE1C233-1E48-41DF-A0F6-8477020D36AD}.Debug|x64.Build.0 = Debug|x64
+		{FFE1C233-1E48-41DF-A0F6-8477020D36AD}.Debug|x86.ActiveCfg = Debug|Win32
+		{FFE1C233-1E48-41DF-A0F6-8477020D36AD}.Debug|x86.Build.0 = Debug|Win32
+		{FFE1C233-1E48-41DF-A0F6-8477020D36AD}.Release|x64.ActiveCfg = Release|x64
+		{FFE1C233-1E48-41DF-A0F6-8477020D36AD}.Release|x64.Build.0 = Release|x64
+		{FFE1C233-1E48-41DF-A0F6-8477020D36AD}.Release|x86.ActiveCfg = Release|Win32
+		{FFE1C233-1E48-41DF-A0F6-8477020D36AD}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2B331F23-7BC3-4FA3-8320-BF17D03D0305}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Common\Common.vcxitems*{7e0e5a7f-aebe-4dd3-b8e8-1cda984f1032}*SharedItemsImports = 9
+		Common\Common.vcxitems*{ffe1c233-1e48-41df-a0f6-8477020d36ad}*SharedItemsImports = 4
+	EndGlobalSection
+EndGlobal
