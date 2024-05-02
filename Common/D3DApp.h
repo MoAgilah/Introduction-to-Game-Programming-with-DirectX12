@@ -86,14 +86,14 @@ protected:
 
 	HINSTANCE m_hInst = nullptr;
 	HWND m_hMainWnd = nullptr;
-	bool m_appPaused;
-	bool m_minimized;
-	bool m_maximized;
-	bool m_resizing;
-	bool m_fullScreenState;
+	bool m_appPaused = false;
+	bool m_minimized = false;
+	bool m_maximized = false;
+	bool m_resizing = false;
+	bool m_fullScreenState = false;
 
-	bool m_4xMsaaState;
-	UINT m_4xMsaaQuality;
+	bool m_4xMsaaState = false;
+	UINT m_4xMsaaQuality = 0;
 
 	Timer m_timer;
 
@@ -102,14 +102,14 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12Device> m_device;
 
 	Microsoft::WRL::ComPtr<ID3D12Fence> m_dxgiFence;
-	UINT64 m_currentFence;
+	UINT64 m_currentFence = 0;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue;
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_directCmdListAlloc;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList;
 
 	static const int m_swapChainBufferCount = 2;
-	int m_currBackBuffer;
+	int m_currBackBuffer = 0;
 
 	std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, m_swapChainBufferCount> m_swapChainBuffer;
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_depthStencilBuffer;
@@ -117,17 +117,17 @@ protected:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 
-	D3D12_VIEWPORT m_screenViewport;
-	D3D12_RECT m_scissorRect;
+	D3D12_VIEWPORT m_screenViewport{};
+	D3D12_RECT m_scissorRect{};
 
-	UINT m_rtvDescriptorSize;
-	UINT m_dsvDescriptorSize;
-	UINT m_cbrSrvDescriptorSize;
+	UINT m_rtvDescriptorSize = 0;
+	UINT m_dsvDescriptorSize = 0;
+	UINT m_cbrSrvDescriptorSize = 0;
 
-	std::wstring m_mainWndCaption;
-	D3D_DRIVER_TYPE m_d3dDriverType;
-	DXGI_FORMAT m_backBufferFormat;
-	DXGI_FORMAT m_depthStencilFormat;
-	int m_clientWidth;
-	int m_clientHeight;
+	std::wstring m_mainWndCaption = L"d3d App";
+	D3D_DRIVER_TYPE m_d3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
+	DXGI_FORMAT m_backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	DXGI_FORMAT m_depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	int m_clientWidth = 800;
+	int m_clientHeight = 600;
 };

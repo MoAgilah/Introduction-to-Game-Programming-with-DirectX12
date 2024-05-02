@@ -27,5 +27,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)DDSTextureLoader.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MathHelper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Timer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)UploadBuffer.h" />
   </ItemGroup>
 </Project>

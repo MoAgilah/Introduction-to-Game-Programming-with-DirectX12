@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Direct3D Initilisation", "D
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxitems", "{7E0E5A7F-AEBE-4DD3-B8E8-1CDA984F1032}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Drawing in Direct3D", "Drawing in Direct3D\Drawing in Direct3D.vcxproj", "{BE120195-7B1F-461D-99AC-C8C5F062BE87}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -23,6 +25,14 @@ Global
 		{FFE1C233-1E48-41DF-A0F6-8477020D36AD}.Release|x64.Build.0 = Release|x64
 		{FFE1C233-1E48-41DF-A0F6-8477020D36AD}.Release|x86.ActiveCfg = Release|Win32
 		{FFE1C233-1E48-41DF-A0F6-8477020D36AD}.Release|x86.Build.0 = Release|Win32
+		{BE120195-7B1F-461D-99AC-C8C5F062BE87}.Debug|x64.ActiveCfg = Debug|x64
+		{BE120195-7B1F-461D-99AC-C8C5F062BE87}.Debug|x64.Build.0 = Debug|x64
+		{BE120195-7B1F-461D-99AC-C8C5F062BE87}.Debug|x86.ActiveCfg = Debug|Win32
+		{BE120195-7B1F-461D-99AC-C8C5F062BE87}.Debug|x86.Build.0 = Debug|Win32
+		{BE120195-7B1F-461D-99AC-C8C5F062BE87}.Release|x64.ActiveCfg = Release|x64
+		{BE120195-7B1F-461D-99AC-C8C5F062BE87}.Release|x64.Build.0 = Release|x64
+		{BE120195-7B1F-461D-99AC-C8C5F062BE87}.Release|x86.ActiveCfg = Release|Win32
+		{BE120195-7B1F-461D-99AC-C8C5F062BE87}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -32,6 +42,7 @@ Global
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Common\Common.vcxitems*{7e0e5a7f-aebe-4dd3-b8e8-1cda984f1032}*SharedItemsImports = 9
+		Common\Common.vcxitems*{be120195-7b1f-461d-99ac-c8c5f062be87}*SharedItemsImports = 4
 		Common\Common.vcxitems*{ffe1c233-1e48-41df-a0f6-8477020d36ad}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal

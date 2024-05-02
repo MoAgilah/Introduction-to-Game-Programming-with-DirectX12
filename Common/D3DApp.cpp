@@ -3,7 +3,7 @@
 // It incorporates my own coding style and naming conventions.
 //***************************************************************************************
 #include "D3DApp.h"
-#include <WindowsX.h>
+#include <Windowsx.h>
 
 LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -13,28 +13,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 D3DApp::D3DApp()
-	: m_appPaused(false),
-	m_minimized(false),
-	m_maximized(false),
-	m_resizing(false),
-	m_fullScreenState(false),
-	m_4xMsaaState(false),
-	m_4xMsaaQuality(0),
-	m_currentFence(0),
-	m_currBackBuffer(0),
-	m_screenViewport(D3D12_VIEWPORT()),
-	m_scissorRect(RECT()),
-	m_rtvDescriptorSize(0),
-	m_dsvDescriptorSize(0),
-	m_cbrSrvDescriptorSize(0),
-	m_mainWndCaption(L"D3D App"),
-	m_d3dDriverType(D3D_DRIVER_TYPE_HARDWARE),
-	m_backBufferFormat(DXGI_FORMAT_R8G8B8A8_UNORM),
-	m_depthStencilFormat(DXGI_FORMAT_D24_UNORM_S8_UINT),
-	m_clientWidth(800),
-	m_clientHeight(600)
 {
-	m_hInst = GetModuleHandle(NULL);
+	m_hInst = GetModuleHandle(nullptr);
 	assert(m_app == nullptr);
 	m_app = this;
 }
@@ -47,7 +27,7 @@ D3DApp::~D3DApp()
 		FlushCommandQueue();
 
 	DestroyWindow(m_hMainWnd);
-	m_hMainWnd = NULL;
+	m_hMainWnd = nullptr;
 
 	UnregisterClass(m_mainWndCaption.c_str(), m_hInst);
 
