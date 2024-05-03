@@ -22,8 +22,18 @@ bool BoxApp::Initialize()
 	BuildDescriptorHeaps();
 	BuildConstantBuffers();
 	BuildRootSignature();
-	BuildShadersAndInputLayout();
-	BuildBoxGeometry();
+
+	if (!m_multipleInputSlots)
+	{
+		BuildShadersAndInputLayoutWithSingleInputSlot();
+		BuildBoxGeometryWithSingleInputSlots();
+	}
+	else
+	{
+		BuildShadersAndInputLayoutWithMultipleInputSlots();
+		BuildBoxGeometryWithMultipleInputSlots();
+	}
+
 	BuildPSO();
 
 	// Execute the initialization commands.
@@ -106,9 +116,18 @@ void BoxApp::Draw(const Timer& gt)
 
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
-	m_commandList->IASetVertexBuffers(0, 1, &m_boxGeo->VertexBufferView());
+	if (!m_multipleInputSlots)
+	{
+		m_commandList->IASetVertexBuffers(0, 1, &m_boxGeo->VertexBufferView());
+	}
+	else
+	{
+		m_commandList->IASetVertexBuffers(0, 1, &m_boxGeo->VertexBufferView());
+		m_commandList->IASetVertexBuffers(1, 1, &m_boxGeo->ColorBufferView());
+	}
+
 	m_commandList->IASetIndexBuffer(&m_boxGeo->IndexBufferView());
-	m_commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
 
@@ -253,23 +272,7 @@ void BoxApp::BuildRootSignature()
 		serializedRootSig->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 }
 
-void BoxApp::BuildShadersAndInputLayout()
-{
-	m_vsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
-		"VS", "vs_5_0");
-	m_psByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
-		"PS", "ps_5_0");
-
-	m_inputLayout =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
-		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
-		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-}
-
-void BoxApp::BuildBoxGeometry()
+void BoxApp::BuildBoxGeometryWithSingleInputSlots()
 {
 	std::array<Vertex, 8> vertices =
 	{
@@ -341,6 +344,136 @@ void BoxApp::BuildBoxGeometry()
 	submesh.BaseVertexLocation = 0;
 
 	m_boxGeo->DrawArgs["box"] = submesh;
+}
+
+void BoxApp::BuildShadersAndInputLayoutWithSingleInputSlot()
+{
+	m_vsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
+		"VS", "vs_5_0");
+	m_psByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
+		"PS", "ps_5_0");
+
+	m_inputLayout =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
+		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
+}
+
+void BoxApp::BuildBoxGeometryWithMultipleInputSlots()
+{
+	std::array<VPosData, 8> vertices =
+	{
+		VPosData({ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f) }),
+		VPosData({ DirectX::XMFLOAT3(-1.0f, +1.0f, -1.0f) }),
+		VPosData({ DirectX::XMFLOAT3(+1.0f, +1.0f, -1.0f) }),
+		VPosData({ DirectX::XMFLOAT3(+1.0f, -1.0f, -1.0f) }),
+		VPosData({ DirectX::XMFLOAT3(-1.0f, -1.0f, +1.0f) }),
+		VPosData({ DirectX::XMFLOAT3(-1.0f, +1.0f, +1.0f) }),
+		VPosData({ DirectX::XMFLOAT3(+1.0f, +1.0f, +1.0f) }),
+		VPosData({ DirectX::XMFLOAT3(+1.0f, -1.0f, +1.0f) }),
+	};
+
+	std::array<VColorData, 8> colors =
+	{
+		VColorData({ DirectX::XMFLOAT4(DirectX::Colors::White) }),
+		VColorData({ DirectX::XMFLOAT4(DirectX::Colors::Black) }),
+		VColorData({ DirectX::XMFLOAT4(DirectX::Colors::Red) }),
+		VColorData({ DirectX::XMFLOAT4(DirectX::Colors::Green) }),
+		VColorData({ DirectX::XMFLOAT4(DirectX::Colors::Blue) }),
+		VColorData({ DirectX::XMFLOAT4(DirectX::Colors::Yellow) }),
+		VColorData({ DirectX::XMFLOAT4(DirectX::Colors::Cyan) }),
+		VColorData({ DirectX::XMFLOAT4(DirectX::Colors::Magenta)})
+	};
+
+	std::array<std::uint16_t, 36> indices =
+	{
+		// front face
+		0, 1, 2,
+		0, 2, 3,
+		// back face
+		4, 6, 5,
+		4, 7, 6,
+		// left face
+		4, 5, 1,
+		4, 1, 0,
+		// right face
+		3, 2, 6,
+		3, 6, 7,
+		// top face
+		1, 5, 6,
+		1, 6, 2,
+		// bottom face
+		4, 0, 3,
+		4, 3, 7
+	};
+
+	const UINT vbByteSize = (UINT)vertices.size() * sizeof(VPosData);
+	const UINT cbByteSize = (UINT)colors.size() * sizeof(VColorData);
+	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+	m_boxGeo = std::make_unique<MeshGeometry>();
+	m_boxGeo->Name = "boxGeo";
+
+	ThrowIfFailed(D3DCreateBlob(vbByteSize, &m_boxGeo->VertexBufferCPU));
+	CopyMemory(m_boxGeo->VertexBufferCPU->GetBufferPointer(),
+		vertices.data(), vbByteSize);
+
+	ThrowIfFailed(D3DCreateBlob(cbByteSize, &m_boxGeo->ColorBufferCPU));
+	CopyMemory(m_boxGeo->ColorBufferCPU->GetBufferPointer(),
+		colors.data(), cbByteSize);
+
+	ThrowIfFailed(D3DCreateBlob(ibByteSize, &m_boxGeo->IndexBufferCPU));
+	CopyMemory(m_boxGeo->IndexBufferCPU->GetBufferPointer(),
+		indices.data(), ibByteSize);
+
+	m_boxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+		m_device.Get(), m_commandList.Get(),
+		vertices.data(), vbByteSize,
+		m_boxGeo->VertexBufferUploader);
+
+	m_boxGeo->ColorBufferGPU = d3dUtil::CreateDefaultBuffer(
+		m_device.Get(), m_commandList.Get(),
+		colors.data(), cbByteSize,
+		m_boxGeo->ColorBufferUploader);
+
+	m_boxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
+		m_device.Get(), m_commandList.Get(),
+		indices.data(), ibByteSize,
+		m_boxGeo->IndexBufferUploader);
+
+	m_boxGeo->VertexByteStride = sizeof(VPosData);
+	m_boxGeo->VertexBufferByteSize = vbByteSize;
+	m_boxGeo->ColorByteStride = sizeof(VColorData);
+	m_boxGeo->ColorBufferByteSize = cbByteSize;
+	m_boxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+	m_boxGeo->IndexBufferByteSize = ibByteSize;
+
+	SubmeshGeometry submesh;
+	submesh.IndexCount = (UINT)indices.size();
+
+	submesh.StartIndexLocation = 0;
+	submesh.BaseVertexLocation = 0;
+
+	m_boxGeo->DrawArgs["box"] = submesh;
+}
+
+void BoxApp::BuildShadersAndInputLayoutWithMultipleInputSlots()
+{
+	m_vsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
+		"VS", "vs_5_0");
+	m_psByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
+		"PS", "ps_5_0");
+
+	m_inputLayout =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0,
+		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
 }
 
 void BoxApp::BuildPSO()

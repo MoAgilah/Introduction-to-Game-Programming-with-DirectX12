@@ -15,6 +15,16 @@
 #include "MathHelper.h"
 #include "UploadBuffer.h"
 
+struct VPosData
+{
+	DirectX::XMFLOAT3 Pos;
+};
+
+struct VColorData
+{
+	DirectX::XMFLOAT4 Color;
+};
+
 struct Vertex
 {
 	DirectX::XMFLOAT3 pos;
@@ -47,8 +57,12 @@ private:
 	void BuildDescriptorHeaps();
 	void BuildConstantBuffers();
 	void BuildRootSignature();
-	void BuildShadersAndInputLayout();
-	void BuildBoxGeometry();
+
+	void BuildBoxGeometryWithSingleInputSlots();
+	void BuildShadersAndInputLayoutWithSingleInputSlot();
+
+	void BuildBoxGeometryWithMultipleInputSlots();
+	void BuildShadersAndInputLayoutWithMultipleInputSlots();
 	void BuildPSO();
 
 private:
@@ -69,6 +83,7 @@ private:
 	DirectX::XMFLOAT4X4 m_view = MathHelper::Identity4x4();
 	DirectX::XMFLOAT4X4 m_proj = MathHelper::Identity4x4();
 
+	bool m_multipleInputSlots = false;
 	float m_theta = 1.5f * DirectX::XM_PI;
 	float m_phi = DirectX::XM_PIDIV4;
 	float m_radius = 5.0f;
