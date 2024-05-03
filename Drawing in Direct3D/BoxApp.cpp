@@ -39,7 +39,11 @@ bool BoxApp::Initialize()
 		break;
 	case Drawing::PRIMITIVE:
 		BuildShadersAndInputLayoutWithSingleInputSlot();
-		BuildPrimitiveTopology();
+		BuildPrimitiveTopologyWithSingleInputSlots();
+		break;
+	case Drawing::PYRAMID:
+		BuildShadersAndInputLayoutWithSingleInputSlot();
+		BuildPyramidGeometryWithSingleInputSlots();
 		break;
 	default:
 		break;
@@ -134,6 +138,9 @@ void BoxApp::Draw(const Timer& gt)
 		break;
 	case Drawing::PRIMITIVE:
 		DrawPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
+		break;
+	case Drawing::PYRAMID:
+		DrawPyramidGeometryTopology();
 		break;
 	default:
 		break;
@@ -278,7 +285,7 @@ void BoxApp::BuildRootSignature()
 		serializedRootSig->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 }
 
-void BoxApp::BuildPrimitiveTopology()
+void BoxApp::BuildPrimitiveTopologyWithSingleInputSlots()
 {
 	std::array<Vertex, 8> vertices =
 	{
@@ -409,20 +416,66 @@ void BoxApp::BuildBoxGeometryWithSingleInputSlots()
 	m_meshGeo->DrawArgs["box"] = submesh;
 }
 
-void BoxApp::BuildShadersAndInputLayoutWithSingleInputSlot()
+void BoxApp::BuildPyramidGeometryWithSingleInputSlots()
 {
-	m_vsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
-		"VS", "vs_5_0");
-	m_psByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
-		"PS", "ps_5_0");
-
-	m_inputLayout =
+	std::array<Vertex, 5> vertices =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
-		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
-		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		// Square base of the pyramid
+		Vertex({ DirectX::XMFLOAT3(-1.0, -1.0, 1.0), DirectX::XMFLOAT4(DirectX::Colors::Green) }),
+		Vertex({ DirectX::XMFLOAT3(1.0f, -1.0, 1.0f), DirectX::XMFLOAT4(DirectX::Colors::Green) }),
+		Vertex({ DirectX::XMFLOAT3(-1.0f, -1.0f, -1.0f), DirectX::XMFLOAT4(DirectX::Colors::Green) }),
+		Vertex({ DirectX::XMFLOAT3(1.0f, -1.0, -1.0f), DirectX::XMFLOAT4(DirectX::Colors::Green) }),
+
+		// The tip of the pyramid
+		Vertex({ DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f), DirectX::XMFLOAT4(DirectX::Colors::Red) }),
 	};
+
+	std::array<std::uint16_t, 18> indices =
+	{
+		0, 1, 4,
+		1, 3, 4,
+		3, 2, 4,
+		2, 0, 4,
+		0, 2, 1,
+		1, 2, 3,
+	};
+
+	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+	m_meshGeo = std::make_unique<MeshGeometry>();
+	m_meshGeo->Name = "pyramidGeo";
+
+	ThrowIfFailed(D3DCreateBlob(vbByteSize, &m_meshGeo->VertexBufferCPU));
+	CopyMemory(m_meshGeo->VertexBufferCPU->GetBufferPointer(),
+		vertices.data(), vbByteSize);
+
+	ThrowIfFailed(D3DCreateBlob(ibByteSize, &m_meshGeo->IndexBufferCPU));
+	CopyMemory(m_meshGeo->IndexBufferCPU->GetBufferPointer(),
+		indices.data(), ibByteSize);
+
+	m_meshGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+		m_device.Get(), m_commandList.Get(),
+		vertices.data(), vbByteSize,
+		m_meshGeo->VertexBufferUploader);
+
+	m_meshGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
+		m_device.Get(), m_commandList.Get(),
+		indices.data(), ibByteSize,
+		m_meshGeo->IndexBufferUploader);
+
+	m_meshGeo->VertexByteStride = sizeof(Vertex);
+	m_meshGeo->VertexBufferByteSize = vbByteSize;
+	m_meshGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+	m_meshGeo->IndexBufferByteSize = ibByteSize;
+
+	SubmeshGeometry submesh;
+	submesh.IndexCount = (UINT)indices.size();
+
+	submesh.StartIndexLocation = 0;
+	submesh.BaseVertexLocation = 0;
+
+	m_meshGeo->DrawArgs["pyramid"] = submesh;
 }
 
 void BoxApp::BuildBoxGeometryWithMultipleInputSlots()
@@ -451,26 +504,26 @@ void BoxApp::BuildBoxGeometryWithMultipleInputSlots()
 		VColorData({ DirectX::XMFLOAT4(DirectX::Colors::Magenta)})
 	};
 
-	std::array<std::uint16_t, 36> indices =
+	std::array<std::uint16_t, 3> indices =
 	{
 		// front face
 		0, 1, 2,
-		0, 2, 3,
-		// back face
-		4, 6, 5,
-		4, 7, 6,
-		// left face
-		4, 5, 1,
-		4, 1, 0,
-		// right face
-		3, 2, 6,
-		3, 6, 7,
-		// top face
-		1, 5, 6,
-		1, 6, 2,
-		// bottom face
-		4, 0, 3,
-		4, 3, 7
+		//0, 2, 3,
+		//// back face
+		//4, 6, 5,
+		//4, 7, 6,
+		//// left face
+		//4, 5, 1,
+		//4, 1, 0,
+		//// right face
+		//3, 2, 6,
+		//3, 6, 7,
+		//// top face
+		//1, 5, 6,
+		//1, 6, 2,
+		//// bottom face
+		//4, 0, 3,
+		//4, 3, 7
 	};
 
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(VPosData);
@@ -552,6 +605,34 @@ void BoxApp::DrawBoxGeometryTopology()
 	m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
 
 	m_commandList->DrawIndexedInstanced(m_meshGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
+}
+
+void BoxApp::DrawPyramidGeometryTopology()
+{
+	m_commandList->IASetVertexBuffers(0, 1, &m_meshGeo->VertexBufferView());
+
+	m_commandList->IASetIndexBuffer(&m_meshGeo->IndexBufferView());
+	m_commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+
+	m_commandList->DrawIndexedInstanced(m_meshGeo->DrawArgs["pyramid"].IndexCount, 1, 0, 0, 0);
+}
+
+void BoxApp::BuildShadersAndInputLayoutWithSingleInputSlot()
+{
+	m_vsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
+		"VS", "vs_5_0");
+	m_psByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
+		"PS", "ps_5_0");
+
+	m_inputLayout =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
+		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
 }
 
 void BoxApp::BuildShadersAndInputLayoutWithMultipleInputSlots()

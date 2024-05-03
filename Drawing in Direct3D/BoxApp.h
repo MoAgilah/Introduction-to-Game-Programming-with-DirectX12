@@ -63,12 +63,15 @@ private:
 	void BuildConstantBuffers();
 	void BuildRootSignature();
 
-	void BuildPrimitiveTopology();
+	void BuildPrimitiveTopologyWithSingleInputSlots();
 	void BuildBoxGeometryWithSingleInputSlots();
+	void BuildPyramidGeometryWithSingleInputSlots();
+
 	void BuildBoxGeometryWithMultipleInputSlots();
 
 	void DrawPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY topology);
 	void DrawBoxGeometryTopology();
+	void DrawPyramidGeometryTopology();
 
 	void BuildShadersAndInputLayoutWithSingleInputSlot();
 	void BuildShadersAndInputLayoutWithMultipleInputSlots();
@@ -92,7 +95,7 @@ private:
 	DirectX::XMFLOAT4X4 m_view = MathHelper::Identity4x4();
 	DirectX::XMFLOAT4X4 m_proj = MathHelper::Identity4x4();
 
-	Drawing m_drawThis = Drawing::BOX;
+	Drawing m_drawThis = Drawing::PYRAMID;
 	bool m_multipleInputSlots = false;
 	float m_theta = 1.5f * DirectX::XM_PI;
 	float m_phi = DirectX::XM_PIDIV4;
