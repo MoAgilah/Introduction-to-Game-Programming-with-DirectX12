@@ -23,15 +23,26 @@ bool BoxApp::Initialize()
 	BuildConstantBuffers();
 	BuildRootSignature();
 
-	if (!m_multipleInputSlots)
+	switch (m_drawThis)
 	{
+	case Drawing::BOX:
+		if (!m_multipleInputSlots)
+		{
+			BuildShadersAndInputLayoutWithSingleInputSlot();
+			BuildBoxGeometryWithSingleInputSlots();
+		}
+		else
+		{
+			BuildShadersAndInputLayoutWithMultipleInputSlots();
+			BuildBoxGeometryWithMultipleInputSlots();
+		}
+		break;
+	case Drawing::PRIMITIVE:
 		BuildShadersAndInputLayoutWithSingleInputSlot();
-		BuildBoxGeometryWithSingleInputSlots();
-	}
-	else
-	{
-		BuildShadersAndInputLayoutWithMultipleInputSlots();
-		BuildBoxGeometryWithMultipleInputSlots();
+		BuildPrimitiveTopology();
+		break;
+	default:
+		break;
 	}
 
 	BuildPSO();
@@ -116,22 +127,17 @@ void BoxApp::Draw(const Timer& gt)
 
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
-	if (!m_multipleInputSlots)
+	switch (m_drawThis)
 	{
-		m_commandList->IASetVertexBuffers(0, 1, &m_boxGeo->VertexBufferView());
+	case Drawing::BOX:
+		DrawBoxGeometryTopology();
+		break;
+	case Drawing::PRIMITIVE:
+		DrawPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
+		break;
+	default:
+		break;
 	}
-	else
-	{
-		m_commandList->IASetVertexBuffers(0, 1, &m_boxGeo->VertexBufferView());
-		m_commandList->IASetVertexBuffers(1, 1, &m_boxGeo->ColorBufferView());
-	}
-
-	m_commandList->IASetIndexBuffer(&m_boxGeo->IndexBufferView());
-	m_commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
-
-	m_commandList->DrawIndexedInstanced(m_boxGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
 
 	// Indicate a state transition on the resouce usage.
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
@@ -272,6 +278,63 @@ void BoxApp::BuildRootSignature()
 		serializedRootSig->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 }
 
+void BoxApp::BuildPrimitiveTopology()
+{
+	std::array<Vertex, 8> vertices =
+	{
+		Vertex({ DirectX::XMFLOAT3(-1.5f, -0.5f, 0.5f), DirectX::XMFLOAT4(DirectX::Colors::Black) }),
+		Vertex({ DirectX::XMFLOAT3(-1.0f, 0.5f, 0.5f), DirectX::XMFLOAT4(DirectX::Colors::Black) }),
+		Vertex({ DirectX::XMFLOAT3(-0.5f, -0.2f, 0.5f), DirectX::XMFLOAT4(DirectX::Colors::Black) }),
+		Vertex({ DirectX::XMFLOAT3(0.2f, 0.2f, 0.5f), DirectX::XMFLOAT4(DirectX::Colors::Black) }),
+		Vertex({ DirectX::XMFLOAT3(0.5f, -0.3f, 0.5f), DirectX::XMFLOAT4(DirectX::Colors::Black) }),
+		Vertex({ DirectX::XMFLOAT3(0.75f, 0.2f, 0.5f), DirectX::XMFLOAT4(DirectX::Colors::Black) }),
+		Vertex({ DirectX::XMFLOAT3(1.25f, -0.1f, 0.5f), DirectX::XMFLOAT4(DirectX::Colors::Black) }),
+		Vertex({ DirectX::XMFLOAT3(1.5f, 0.75f, 0.5f), DirectX::XMFLOAT4(DirectX::Colors::Black) }),
+	};
+
+	std::array<std::uint16_t, 8> indices =
+	{
+		0,1,2,3,4,5,6,7
+	};
+
+	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+	m_meshGeo = std::make_unique<MeshGeometry>();
+	m_meshGeo->Name = "genGeo";
+
+	ThrowIfFailed(D3DCreateBlob(vbByteSize, &m_meshGeo->VertexBufferCPU));
+	CopyMemory(m_meshGeo->VertexBufferCPU->GetBufferPointer(),
+		vertices.data(), vbByteSize);
+
+	ThrowIfFailed(D3DCreateBlob(ibByteSize, &m_meshGeo->IndexBufferCPU));
+	CopyMemory(m_meshGeo->IndexBufferCPU->GetBufferPointer(),
+		indices.data(), ibByteSize);
+
+	m_meshGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+		m_device.Get(), m_commandList.Get(),
+		vertices.data(), vbByteSize,
+		m_meshGeo->VertexBufferUploader);
+
+	m_meshGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
+		m_device.Get(), m_commandList.Get(),
+		indices.data(), ibByteSize,
+		m_meshGeo->IndexBufferUploader);
+
+	m_meshGeo->VertexByteStride = sizeof(Vertex);
+	m_meshGeo->VertexBufferByteSize = vbByteSize;
+	m_meshGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+	m_meshGeo->IndexBufferByteSize = ibByteSize;
+
+	SubmeshGeometry submesh;
+	submesh.IndexCount = (UINT)indices.size();
+
+	submesh.StartIndexLocation = 0;
+	submesh.BaseVertexLocation = 0;
+
+	m_meshGeo->DrawArgs["gen"] = submesh;
+}
+
 void BoxApp::BuildBoxGeometryWithSingleInputSlots()
 {
 	std::array<Vertex, 8> vertices =
@@ -311,31 +374,31 @@ void BoxApp::BuildBoxGeometryWithSingleInputSlots()
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-	m_boxGeo = std::make_unique<MeshGeometry>();
-	m_boxGeo->Name = "boxGeo";
+	m_meshGeo = std::make_unique<MeshGeometry>();
+	m_meshGeo->Name = "boxGeo";
 
-	ThrowIfFailed(D3DCreateBlob(vbByteSize, &m_boxGeo->VertexBufferCPU));
-	CopyMemory(m_boxGeo->VertexBufferCPU->GetBufferPointer(),
+	ThrowIfFailed(D3DCreateBlob(vbByteSize, &m_meshGeo->VertexBufferCPU));
+	CopyMemory(m_meshGeo->VertexBufferCPU->GetBufferPointer(),
 		vertices.data(), vbByteSize);
 
-	ThrowIfFailed(D3DCreateBlob(ibByteSize, &m_boxGeo->IndexBufferCPU));
-	CopyMemory(m_boxGeo->IndexBufferCPU->GetBufferPointer(),
+	ThrowIfFailed(D3DCreateBlob(ibByteSize, &m_meshGeo->IndexBufferCPU));
+	CopyMemory(m_meshGeo->IndexBufferCPU->GetBufferPointer(),
 		indices.data(), ibByteSize);
 
-	m_boxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+	m_meshGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
 		m_device.Get(), m_commandList.Get(),
 		vertices.data(), vbByteSize,
-		m_boxGeo->VertexBufferUploader);
+		m_meshGeo->VertexBufferUploader);
 
-	m_boxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
+	m_meshGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
 		m_device.Get(), m_commandList.Get(),
 		indices.data(), ibByteSize,
-		m_boxGeo->IndexBufferUploader);
+		m_meshGeo->IndexBufferUploader);
 
-	m_boxGeo->VertexByteStride = sizeof(Vertex);
-	m_boxGeo->VertexBufferByteSize = vbByteSize;
-	m_boxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
-	m_boxGeo->IndexBufferByteSize = ibByteSize;
+	m_meshGeo->VertexByteStride = sizeof(Vertex);
+	m_meshGeo->VertexBufferByteSize = vbByteSize;
+	m_meshGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+	m_meshGeo->IndexBufferByteSize = ibByteSize;
 
 	SubmeshGeometry submesh;
 	submesh.IndexCount = (UINT)indices.size();
@@ -343,7 +406,7 @@ void BoxApp::BuildBoxGeometryWithSingleInputSlots()
 	submesh.StartIndexLocation = 0;
 	submesh.BaseVertexLocation = 0;
 
-	m_boxGeo->DrawArgs["box"] = submesh;
+	m_meshGeo->DrawArgs["box"] = submesh;
 }
 
 void BoxApp::BuildShadersAndInputLayoutWithSingleInputSlot()
@@ -414,42 +477,42 @@ void BoxApp::BuildBoxGeometryWithMultipleInputSlots()
 	const UINT cbByteSize = (UINT)colors.size() * sizeof(VColorData);
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-	m_boxGeo = std::make_unique<MeshGeometry>();
-	m_boxGeo->Name = "boxGeo";
+	m_meshGeo = std::make_unique<MeshGeometry>();
+	m_meshGeo->Name = "boxGeo";
 
-	ThrowIfFailed(D3DCreateBlob(vbByteSize, &m_boxGeo->VertexBufferCPU));
-	CopyMemory(m_boxGeo->VertexBufferCPU->GetBufferPointer(),
+	ThrowIfFailed(D3DCreateBlob(vbByteSize, &m_meshGeo->VertexBufferCPU));
+	CopyMemory(m_meshGeo->VertexBufferCPU->GetBufferPointer(),
 		vertices.data(), vbByteSize);
 
-	ThrowIfFailed(D3DCreateBlob(cbByteSize, &m_boxGeo->ColorBufferCPU));
-	CopyMemory(m_boxGeo->ColorBufferCPU->GetBufferPointer(),
+	ThrowIfFailed(D3DCreateBlob(cbByteSize, &m_meshGeo->ColorBufferCPU));
+	CopyMemory(m_meshGeo->ColorBufferCPU->GetBufferPointer(),
 		colors.data(), cbByteSize);
 
-	ThrowIfFailed(D3DCreateBlob(ibByteSize, &m_boxGeo->IndexBufferCPU));
-	CopyMemory(m_boxGeo->IndexBufferCPU->GetBufferPointer(),
+	ThrowIfFailed(D3DCreateBlob(ibByteSize, &m_meshGeo->IndexBufferCPU));
+	CopyMemory(m_meshGeo->IndexBufferCPU->GetBufferPointer(),
 		indices.data(), ibByteSize);
 
-	m_boxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
+	m_meshGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(
 		m_device.Get(), m_commandList.Get(),
 		vertices.data(), vbByteSize,
-		m_boxGeo->VertexBufferUploader);
+		m_meshGeo->VertexBufferUploader);
 
-	m_boxGeo->ColorBufferGPU = d3dUtil::CreateDefaultBuffer(
+	m_meshGeo->ColorBufferGPU = d3dUtil::CreateDefaultBuffer(
 		m_device.Get(), m_commandList.Get(),
 		colors.data(), cbByteSize,
-		m_boxGeo->ColorBufferUploader);
+		m_meshGeo->ColorBufferUploader);
 
-	m_boxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
+	m_meshGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(
 		m_device.Get(), m_commandList.Get(),
 		indices.data(), ibByteSize,
-		m_boxGeo->IndexBufferUploader);
+		m_meshGeo->IndexBufferUploader);
 
-	m_boxGeo->VertexByteStride = sizeof(VPosData);
-	m_boxGeo->VertexBufferByteSize = vbByteSize;
-	m_boxGeo->ColorByteStride = sizeof(VColorData);
-	m_boxGeo->ColorBufferByteSize = cbByteSize;
-	m_boxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
-	m_boxGeo->IndexBufferByteSize = ibByteSize;
+	m_meshGeo->VertexByteStride = sizeof(VPosData);
+	m_meshGeo->VertexBufferByteSize = vbByteSize;
+	m_meshGeo->ColorByteStride = sizeof(VColorData);
+	m_meshGeo->ColorBufferByteSize = cbByteSize;
+	m_meshGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+	m_meshGeo->IndexBufferByteSize = ibByteSize;
 
 	SubmeshGeometry submesh;
 	submesh.IndexCount = (UINT)indices.size();
@@ -457,7 +520,38 @@ void BoxApp::BuildBoxGeometryWithMultipleInputSlots()
 	submesh.StartIndexLocation = 0;
 	submesh.BaseVertexLocation = 0;
 
-	m_boxGeo->DrawArgs["box"] = submesh;
+	m_meshGeo->DrawArgs["box"] = submesh;
+}
+
+void BoxApp::DrawPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY topology)
+{
+	m_commandList->IASetVertexBuffers(0, 1, &m_meshGeo->VertexBufferView());
+	m_commandList->IASetIndexBuffer(&m_meshGeo->IndexBufferView());
+	m_commandList->IASetPrimitiveTopology(topology);
+
+	m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+
+	m_commandList->DrawIndexedInstanced(m_meshGeo->DrawArgs["gen"].IndexCount, 1, 0, 0, 0);
+}
+
+void BoxApp::DrawBoxGeometryTopology()
+{
+	if (!m_multipleInputSlots)
+	{
+		m_commandList->IASetVertexBuffers(0, 1, &m_meshGeo->VertexBufferView());
+	}
+	else
+	{
+		m_commandList->IASetVertexBuffers(0, 1, &m_meshGeo->VertexBufferView());
+		m_commandList->IASetVertexBuffers(1, 1, &m_meshGeo->ColorBufferView());
+	}
+
+	m_commandList->IASetIndexBuffer(&m_meshGeo->IndexBufferView());
+	m_commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+
+	m_commandList->DrawIndexedInstanced(m_meshGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
 }
 
 void BoxApp::BuildShadersAndInputLayoutWithMultipleInputSlots()

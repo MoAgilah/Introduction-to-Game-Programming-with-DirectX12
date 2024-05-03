@@ -36,6 +36,11 @@ struct ObjectConstants
 	DirectX::XMFLOAT4X4 WorldViewProj = MathHelper::Identity4x4();
 };
 
+enum class Drawing
+{
+	BOX = 0, PRIMITIVE, PYRAMID
+};
+
 class BoxApp : public D3DApp
 {
 public:
@@ -58,10 +63,14 @@ private:
 	void BuildConstantBuffers();
 	void BuildRootSignature();
 
+	void BuildPrimitiveTopology();
 	void BuildBoxGeometryWithSingleInputSlots();
-	void BuildShadersAndInputLayoutWithSingleInputSlot();
-
 	void BuildBoxGeometryWithMultipleInputSlots();
+
+	void DrawPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY topology);
+	void DrawBoxGeometryTopology();
+
+	void BuildShadersAndInputLayoutWithSingleInputSlot();
 	void BuildShadersAndInputLayoutWithMultipleInputSlots();
 	void BuildPSO();
 
@@ -70,7 +79,7 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_cbvHeap;
 
 	std::unique_ptr<UploadBuffer<ObjectConstants>> m_objectCB;
-	std::unique_ptr<MeshGeometry> m_boxGeo;
+	std::unique_ptr<MeshGeometry> m_meshGeo;
 
 	Microsoft::WRL::ComPtr<ID3DBlob> m_vsByteCode;
 	Microsoft::WRL::ComPtr<ID3DBlob> m_psByteCode;
@@ -83,6 +92,7 @@ private:
 	DirectX::XMFLOAT4X4 m_view = MathHelper::Identity4x4();
 	DirectX::XMFLOAT4X4 m_proj = MathHelper::Identity4x4();
 
+	Drawing m_drawThis = Drawing::BOX;
 	bool m_multipleInputSlots = false;
 	float m_theta = 1.5f * DirectX::XM_PI;
 	float m_phi = DirectX::XM_PIDIV4;
