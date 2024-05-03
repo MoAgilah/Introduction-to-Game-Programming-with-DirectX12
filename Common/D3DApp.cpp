@@ -261,8 +261,8 @@ void D3DApp::OnResize()
 	ThrowIfFailed(m_commandList->Reset(m_directCmdListAlloc.Get(), nullptr));
 
 	// Release the previous resources we will be recreating.
-	for (Microsoft::WRL::ComPtr<ID3D12Resource> swapChain : m_swapChainBuffer)
-		swapChain.Reset();
+	for (UINT i = 0; i < m_swapChainBufferCount; i++)
+		m_swapChainBuffer[i].Reset();
 
 	m_depthStencilBuffer.Reset();
 
