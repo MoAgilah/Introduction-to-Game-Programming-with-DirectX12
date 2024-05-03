@@ -127,7 +127,7 @@ void BoxApp::Draw(const Timer& gt)
 	}
 
 	m_commandList->IASetIndexBuffer(&m_boxGeo->IndexBufferView());
-	m_commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	m_commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
 
