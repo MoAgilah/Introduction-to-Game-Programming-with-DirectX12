@@ -218,10 +218,7 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
 	case WM_KEYUP:
-		if (wParam == VK_ESCAPE)
-			PostQuitMessage(0);
-		else if ((int)wParam == VK_F2)
-			Set4xMsaaState(!m_4xMsaaState);
+		OnKeyUp(wParam);
 
 		return 0;
 	}
@@ -344,6 +341,17 @@ void D3DApp::OnResize()
 	m_screenViewport.MaxDepth = 1.0f;
 
 	m_scissorRect = { 0, 0, m_clientWidth, m_clientHeight };
+}
+
+void D3DApp::OnKeyUp(WPARAM btnState)
+{
+	if (btnState == VK_ESCAPE)
+		PostQuitMessage(0);
+	//  following is disabled due to the fact the sample
+	//  does not correctly implement this functionality
+	//  will update to facilitate at a later date
+	/*else if ((int)btnState == VK_F2)
+		Set4xMsaaState(!m_4xMsaaState);*/
 }
 
 bool D3DApp::InitMainWindow()

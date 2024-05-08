@@ -25,19 +25,15 @@ bool BoxApp::Initialize()
 	BuildConstantBuffers();
 	BuildRootSignature();
 
-	switch (m_drawThis)
+	switch (s_drawThis)
 	{
 	case Drawing::BOX:
-		if (!m_multipleInputSlots)
-		{
-			BuildShadersAndInputLayoutWithSingleInputSlot();
-			BuildBoxGeometryWithSingleInputSlots();
-		}
-		else
-		{
-			BuildShadersAndInputLayoutWithMultipleInputSlots();
-			BuildBoxGeometryWithMultipleInputSlots();
-		}
+		BuildShadersAndInputLayoutWithSingleInputSlot();
+		BuildBoxGeometryWithSingleInputSlots();
+		break;
+	case Drawing::BOXMULTIPLEINPUTSLOTS:
+		BuildShadersAndInputLayoutWithMultipleInputSlots();
+		BuildBoxGeometryWithMultipleInputSlots();
 		break;
 	case Drawing::PRIMITIVE:
 		BuildShadersAndInputLayoutWithSingleInputSlot();
@@ -47,7 +43,7 @@ bool BoxApp::Initialize()
 		BuildShadersAndInputLayoutWithSingleInputSlot();
 		BuildPyramidGeometryWithSingleInputSlots();
 		break;
-	case Drawing::MULTIPLE:
+	case Drawing::MULTIPLESHAPES:
 		BuildShadersAndInputLayoutWithSingleInputSlot();
 		BuildBoxAndPyramidGeometryWithSingleInputSlots();
 		break;
@@ -102,16 +98,23 @@ void BoxApp::Update(const Timer& gt)
 	// Update the constant buffer with the latest worldViewProj matrix.
 	ObjectConstants objConstants;
 
-	if (m_drawThis == Drawing::MULTIPLE)
+	if (s_drawThis == Drawing::MULTIPLESHAPES)
 	{
 		DirectX::XMStoreFloat4x4(&objConstants.WorldViewProj, DirectX::XMMatrixTranspose(worldViewProj * DirectX::XMMatrixScaling(0.5, 0.5, 0.5) * DirectX::XMMatrixTranslation(-0.5, 0, 0)));
+		objConstants.gTime = gt.TotalTime();
+		DirectX::XMStoreFloat4(&objConstants.PulseColour, DirectX::Colors::Red);
 		m_objectCB[0]->CopyData(0, objConstants);
+
 		DirectX::XMStoreFloat4x4(&objConstants.WorldViewProj, DirectX::XMMatrixTranspose(worldViewProj * DirectX::XMMatrixScaling(0.5, 0.5, 0.5) * DirectX::XMMatrixTranslation(0.5, 0, 0)));
+		objConstants.gTime = gt.TotalTime();
+		DirectX::XMStoreFloat4(&objConstants.PulseColour, DirectX::Colors::Red);
 		m_objectCB[1]->CopyData(0, objConstants);
 	}
 	else
 	{
 		DirectX::XMStoreFloat4x4(&objConstants.WorldViewProj, DirectX::XMMatrixTranspose(worldViewProj));
+		objConstants.gTime = gt.TotalTime();
+		DirectX::XMStoreFloat4(&objConstants.PulseColour, DirectX::Colors::Red);
 		m_objectCB[0]->CopyData(0, objConstants);
 	}
 }
@@ -148,18 +151,21 @@ void BoxApp::Draw(const Timer& gt)
 
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
-	switch (m_drawThis)
+	switch (s_drawThis)
 	{
 	case Drawing::BOX:
-		DrawBoxGeometryTopology();
+		DrawBoxGeometryTopologyWithSingleInputSlots();
+		break;
+	case Drawing::BOXMULTIPLEINPUTSLOTS:
+		DrawBoxGeometryTopologyWithSingleInputSlots();
 		break;
 	case Drawing::PRIMITIVE:
-		DrawPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
+		DrawPrimitiveTopology(s_thisTopology);
 		break;
 	case Drawing::PYRAMID:
 		DrawPyramidGeometryTopology();
 		break;
-	case Drawing::MULTIPLE:
+	case Drawing::MULTIPLESHAPES:
 		DrawBoxAndPyramidTopology();
 		break;
 	default:
@@ -232,6 +238,26 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 	m_lastMousePos.x = x;
 	m_lastMousePos.y = y;
+}
+
+void BoxApp::OnKeyUp(WPARAM btnState)
+{
+	if ((int)btnState == VK_F3)
+	{
+		ChangeRasterizerState(m_wireFrameFillMode);
+	}
+	else if ((int)btnState == VK_F4)
+	{
+		ChangeRasterizerState(m_disabledCulling);
+	}
+	else if ((int)btnState == VK_F5)
+	{
+		ChangeRasterizerState(m_frontFaceCulling);
+	}
+	else
+	{
+		D3DApp::OnKeyUp(btnState);
+	}
 }
 
 void BoxApp::BuildDescriptorHeaps()
@@ -715,17 +741,22 @@ void BoxApp::DrawPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY topology)
 	m_commandList->DrawIndexedInstanced(m_meshGeo->DrawArgs["gen"].IndexCount, 1, 0, 0, 0);
 }
 
-void BoxApp::DrawBoxGeometryTopology()
+void BoxApp::DrawBoxGeometryTopologyWithSingleInputSlots()
 {
-	if (!m_multipleInputSlots)
-	{
-		m_commandList->IASetVertexBuffers(0, 1, &m_meshGeo->VertexBufferView());
-	}
-	else
-	{
-		m_commandList->IASetVertexBuffers(0, 1, &m_meshGeo->VertexBufferView());
-		m_commandList->IASetVertexBuffers(1, 1, &m_meshGeo->ColorBufferView());
-	}
+	m_commandList->IASetVertexBuffers(0, 1, &m_meshGeo->VertexBufferView());
+
+	m_commandList->IASetIndexBuffer(&m_meshGeo->IndexBufferView());
+	m_commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap[0]->GetGPUDescriptorHandleForHeapStart());
+
+	m_commandList->DrawIndexedInstanced(m_meshGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
+}
+
+void BoxApp::DrawBoxGeometryTopologyWithMultipleInputSlots()
+{
+	m_commandList->IASetVertexBuffers(0, 1, &m_meshGeo->VertexBufferView());
+	m_commandList->IASetVertexBuffers(1, 1, &m_meshGeo->ColorBufferView());
 
 	m_commandList->IASetIndexBuffer(&m_meshGeo->IndexBufferView());
 	m_commandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -765,9 +796,9 @@ void BoxApp::DrawBoxAndPyramidTopology()
 
 void BoxApp::BuildShadersAndInputLayoutWithSingleInputSlot()
 {
-	m_vsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
+	m_vsByteCode = d3dUtil::CompileShader(s_shaderName, nullptr,
 		"VS", "vs_5_0");
-	m_psByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
+	m_psByteCode = d3dUtil::CompileShader(s_shaderName, nullptr,
 		"PS", "ps_5_0");
 
 	m_inputLayout =
@@ -781,9 +812,9 @@ void BoxApp::BuildShadersAndInputLayoutWithSingleInputSlot()
 
 void BoxApp::BuildShadersAndInputLayoutWithMultipleInputSlots()
 {
-	m_vsByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
+	m_vsByteCode = d3dUtil::CompileShader(s_shaderName, nullptr,
 		"VS", "vs_5_0");
-	m_psByteCode = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr,
+	m_psByteCode = d3dUtil::CompileShader(s_shaderName, nullptr,
 		"PS", "ps_5_0");
 
 	m_inputLayout =
@@ -815,6 +846,21 @@ void BoxApp::BuildPSO()
 	};
 
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+
+	if (m_disabledCulling)
+	{
+		psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+	}
+	else
+	{
+		if (m_frontFaceCulling)
+			psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
+		else
+			psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+	}
+
+	psoDesc.RasterizerState.FillMode = m_wireFrameFillMode ? D3D12_FILL_MODE_WIREFRAME : D3D12_FILL_MODE_SOLID;
+
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 	psoDesc.SampleMask = UINT_MAX;
@@ -826,4 +872,14 @@ void BoxApp::BuildPSO()
 	psoDesc.DSVFormat = m_depthStencilFormat;
 
 	ThrowIfFailed(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_PSO)));
+}
+
+void BoxApp::ChangeRasterizerState(bool& option)
+{
+	if (option)
+		option = false;
+	else
+		option = true;
+
+	BuildPSO();
 }
