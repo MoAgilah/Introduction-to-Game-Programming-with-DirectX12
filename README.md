@@ -5,6 +5,7 @@ During my time at university, we employed DirectX extensively, beginning with an
 Once this project is completed the following projects will be updated:
 - [Hierarchical Animation in Computer Graphics]()
 - [Real Time Collisions Handling]()
+  
 ![Book](https://github.com/user-attachments/assets/42b1bc2b-d4c8-4c88-8e51-8831f0960ba4)
 ## Book Summary
 
