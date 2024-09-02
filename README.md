@@ -2,7 +2,7 @@
 ##### By [Frank D. Luna](https://dl.acm.org/doi/book/10.5555/2988380)
 ## Project Description
 During my time at university, we employed DirectX extensively, beginning with an introduction to DirectX9. In the latter years of my course, we transitioned to the use of DirectX11 to construct a number of larger projects. It became evident that these projects were not readily viewable in their current state due to the use of numerous obsolete interfaces when they were updated to be viewed via GitHub. This has motivated me to pursue this book in order to enhance my understanding of the graphics API in accordance with the most recent version. While simultaneously incorporating more prevalent contemporary C++ techniques into the implementation. An occasion to demonstrate my development as a programmer during my tenure in the industry. This project is presently on hold as I am in the process of updating my dissertation project using comparable methodologies. 
-Once this project is completed the following projects will be updated:
+\Once this project is completed the following projects will be updated:
 - [Hierarchical Animation in Computer Graphics]()
 - [Real Time Collisions Handling]()
   
