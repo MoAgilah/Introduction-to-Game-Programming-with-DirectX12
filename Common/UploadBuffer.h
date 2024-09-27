@@ -56,6 +56,7 @@ public:
 	}
 
 private:
+
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_uploadBuffer;
 	BYTE* m_mappedData = nullptr;
 

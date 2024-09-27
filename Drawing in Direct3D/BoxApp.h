@@ -107,6 +107,7 @@ private:
 	void ChangeRasterizerState(bool& option);
 
 private:
+
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
 	std::vector<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>> m_cbvHeap;
 
