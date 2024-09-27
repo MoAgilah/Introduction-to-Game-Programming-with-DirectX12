@@ -33,6 +33,10 @@ void ShapesApp::OnMouseMove(WPARAM btnState, int x, int y)
 {
 }
 
+void ShapesApp::OnKeyUp(WPARAM btnState)
+{
+}
+
 void ShapesApp::OnKeyboardInput(const Timer& gt)
 {
 }

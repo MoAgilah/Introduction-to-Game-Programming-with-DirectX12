@@ -1,8 +1,13 @@
 #pragma once
 
-#include "../Common/d3dUtil.h"
-#include "../Common/MathHelper.h"
-#include "../Common/UploadBuffer.h"
+#include "../../Common/d3dUtil.h"
+#include "../../Common/MathHelper.h"
+#include "../../Common/UploadBuffer.h"
+
+struct ObjectConstants
+{
+	DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
+};
 
 struct PassConstants
 {
@@ -22,11 +27,6 @@ struct PassConstants
 	float DeltaTime = 0.0f;
 };
 
-struct ObjectConstants
-{
-	DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
-};
-
 struct Vertex
 {
 	DirectX::XMFLOAT3 Pos;
@@ -39,7 +39,7 @@ public:
 	FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount);
 	FrameResource(const FrameResource& rhs) = delete;
 	FrameResource& operator=(const FrameResource& rhs) = delete;
-	~FrameResource() = default;
+	~FrameResource();
 
 	// We cannot reset the allocator until the GPU is done processing the
 	// commands. So each frame needs their own allocator.
@@ -47,8 +47,8 @@ public:
 
 	// We cannot update a cBuffer until the GPU is done processing the
 	// commands that reference it. So each frame needs their own cBuffers.
-	std::unique_ptr<UploadBuffer<PassConstants>> m_passCB;
-	std::unique_ptr<UploadBuffer<ObjectConstants>> m_objCB;
+	std::unique_ptr<UploadBuffer<PassConstants>> m_passCB = nullptr;
+	std::unique_ptr<UploadBuffer<ObjectConstants>> m_objCB = nullptr;
 
 	UINT64 m_fence = 0;
 };

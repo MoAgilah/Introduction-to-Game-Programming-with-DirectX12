@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Common/d3dApp.h"
-#include "../Common/MathHelper.h"
-#include "../Common/UploadBuffer.h"
+#include "../../Common/d3dApp.h"
+#include "../../Common/MathHelper.h"
+#include "../../Common/UploadBuffer.h"
 #include "FrameResource.h"
 
 static const int g_numFrameResources = 3;
@@ -32,7 +32,7 @@ struct RenderItem
     // RenderItems can share the same geometry.
     MeshGeometry* m_geo = nullptr;
 
-    // Primitive Toplogy
+    // Primitive Topology
     D3D12_PRIMITIVE_TOPOLOGY m_primitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
     // DrawIndexedInstanced parameters
@@ -47,18 +47,18 @@ public:
     ShapesApp();
     ShapesApp(const ShapesApp& rhs) = delete;
     ShapesApp& operator=(const ShapesApp& rhs) = delete;
-    ~ShapesApp() = default;
 
-    virtual bool Initialize() override;
+    bool Initialize() override;
 
 private:
-    virtual void OnResize() override;
-    virtual void Update(const Timer& gt) override;
-    virtual void Draw(const Timer& gt) override;
+    void OnResize() override;
+    void Update(const Timer& gt) override;
+    void Draw(const Timer& gt) override;
 
-    virtual void OnMouseDown(WPARAM btnState, int x, int y) override;
-    virtual void OnMouseUp(WPARAM btnState, int x, int y) override;
-    virtual void OnMouseMove(WPARAM btnState, int x, int y) override;
+    void OnMouseDown(WPARAM btnState, int x, int y) override;
+    void OnMouseUp(WPARAM btnState, int x, int y) override;
+    void OnMouseMove(WPARAM btnState, int x, int y) override;
+    void OnKeyUp(WPARAM btnState) override;
 
     void OnKeyboardInput(const Timer& gt);
     void UpdateCamera(const Timer& gt);
