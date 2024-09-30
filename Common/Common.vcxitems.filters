@@ -16,6 +16,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Timer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)GeometryGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)D3DApp.h">
@@ -37,6 +40,9 @@
       <Filter>Headers Files</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)UploadBuffer.h">
+      <Filter>Headers Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)GeometryGenerator.h">
       <Filter>Headers Files</Filter>
     </ClInclude>
   </ItemGroup>

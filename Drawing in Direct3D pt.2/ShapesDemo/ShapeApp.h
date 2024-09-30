@@ -3,9 +3,8 @@
 #include "../../Common/d3dApp.h"
 #include "../../Common/MathHelper.h"
 #include "../../Common/UploadBuffer.h"
+#include "../../Common/GeometryGenerator.h"
 #include "FrameResource.h"
-
-static const int g_numFrameResources = 3;
 
 struct RenderItem
 {
@@ -20,9 +19,9 @@ struct RenderItem
     // update the constant buffer. Because we have an object cBuffer for
     // each FrameResouce, we have to apply the update to each
     // FrameResouce. Thus when we modify object data we should set
-    // m_numFrameDirty = g_numFrameResources so that each FrameResource
+    // m_numFrameDirty = gNumFrameResources so that each FrameResource
     // gets the update
-    int m_numFramesDirty = g_numFrameResources;
+    int m_numFramesDirty = gNumFrameResources;
 
     // Index into GPU constant buffer corresponding to the ObjectCB
     // for this RenderItem
@@ -45,6 +44,7 @@ class ShapesApp : public D3DApp
 {
 public:
     ShapesApp();
+    ~ShapesApp();
     ShapesApp(const ShapesApp& rhs) = delete;
     ShapesApp& operator=(const ShapesApp& rhs) = delete;
 
@@ -88,7 +88,7 @@ private:
     std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> m_shaders;
     std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_PSOs;
 
-    std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
+    std::vector<D3D12_INPUT_ELEMENT_DESC> m_inputLayout;
 
     std::vector<std::unique_ptr<RenderItem>> m_allRItems;
 
@@ -102,13 +102,13 @@ private:
 
     bool m_isWireFrame = false;
 
-    DirectX::XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
-    DirectX::XMFLOAT4X4 mView = MathHelper::Identity4x4();
-    DirectX::XMFLOAT4X4 mProj = MathHelper::Identity4x4();
+    DirectX::XMFLOAT3 m_eyePos = { 0.0f, 0.0f, 0.0f };
+    DirectX::XMFLOAT4X4 m_view = MathHelper::Identity4x4();
+    DirectX::XMFLOAT4X4 m_proj = MathHelper::Identity4x4();
 
-    float mTheta = 1.5f * DirectX::XM_PI;
-    float mPhi = 0.2f * DirectX::XM_PI;
-    float mRadius = 15.0f;
+    float m_theta = 1.5f * DirectX::XM_PI;
+    float m_phi = 0.2f * DirectX::XM_PI;
+    float m_radius = 15.0f;
 
-    POINT mLastMousePos;
+    POINT m_lastMousePos;
 };
